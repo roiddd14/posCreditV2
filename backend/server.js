@@ -1,5 +1,3 @@
-console.log("🔥 THIS SERVER FILE IS RUNNING 🔥");
-
 import express from "express";
 import { connectDB } from "./config/db.js";
 import transactionRoutes from "./routes/transactions.js";
