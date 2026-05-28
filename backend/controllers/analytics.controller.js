@@ -18,8 +18,10 @@ export const getAnalytics = async (req, res) => {
     
     if (startDate || endDate) {
       dateFilter.createdAt = {};
-      if (startDate) dateFilter.createdAt.$gte = new Date(startDate + "T00:00:00");
-      if (endDate)   dateFilter.createdAt.$lte = new Date(endDate   + "T23:59:59.999");
+      // Use +08:00 (Philippine Standard Time) so "today/yesterday" boundaries
+      // match the user's local midnight, not UTC midnight.
+      if (startDate) dateFilter.createdAt.$gte = new Date(startDate + "T00:00:00+08:00");
+      if (endDate)   dateFilter.createdAt.$lte = new Date(endDate   + "T23:59:59.999+08:00");
     }
 
     // === TRANSACTIONS ===
@@ -95,10 +97,10 @@ export const getAnalytics = async (req, res) => {
     let chartStart, chartEnd;
 
     if (startDate && endDate) {
-      chartStart = new Date(startDate + "T00:00:00");
-      chartEnd   = new Date(endDate   + "T23:59:59.999");
+      chartStart = new Date(startDate + "T00:00:00+08:00");
+      chartEnd   = new Date(endDate   + "T23:59:59.999+08:00");
     } else if (startDate) {
-      chartStart = new Date(startDate + "T00:00:00");
+      chartStart = new Date(startDate + "T00:00:00+08:00");
       chartEnd = new Date(today);
       chartEnd.setHours(23, 59, 59, 999);
     } else {
