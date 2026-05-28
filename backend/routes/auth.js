@@ -24,11 +24,28 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Block login if there is already an active (non-expired) session
+    if (user.activeToken) {
+      try {
+        jwt.verify(user.activeToken, process.env.JWT_SECRET);
+        // Token is still valid — another device is logged in
+        return res.status(401).json({
+          message: "This account is already logged in on another device. Please log out there first.",
+          code: "ALREADY_LOGGED_IN",
+        });
+      } catch {
+        // Stored token is expired — allow login to proceed
+      }
+    }
+
     const token = jwt.sign(
       { id: user._id, username: user.username, role: normalizeRole(user.role) },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    user.activeToken = token;
+    await user.save();
 
     res.json({
       token,
@@ -43,6 +60,19 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: err.message || "Login failed" });
+  }
+});
+
+// @desc    Logout — clears the active session token
+// @route   POST /api/auth/logout
+// @access  Private
+router.post("/logout", protect, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user.id, { activeToken: null });
+    res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ message: "Logout failed" });
   }
 });
 

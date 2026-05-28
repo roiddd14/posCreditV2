@@ -108,6 +108,7 @@ function Dashboard({ setToken }) {
     const trimmedFullName = fullName.trim();
     if (!trimmedName)     { showNotification("Please enter a customer name", "error"); return; }
     if (!trimmedFullName) { showNotification("Please enter customer's full name", "error"); return; }
+    if (creditLimit === "" || Number(creditLimit) <= 0) { showNotification("Please enter a credit limit", "error"); return; }
 
     try {
       const token = localStorage.getItem("token");
@@ -968,11 +969,11 @@ function AddCustomerModal({ name, fullName, creditLimit, isDarkMode, onNameChang
             </div>
             <div>
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
-                Credit Limit <span className={`font-normal text-xs ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>(optional)</span>
+                Credit Limit
               </label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
-                <input type="number" min="0" step="0.01" placeholder="0.00" value={creditLimit} onChange={onCreditLimitChange}
+                <input type="number" min="0.01" step="0.01" placeholder="0.00" value={creditLimit} onChange={onCreditLimitChange} required
                   className={`w-full border-2 pl-8 pr-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"}`} />
               </div>
             </div>

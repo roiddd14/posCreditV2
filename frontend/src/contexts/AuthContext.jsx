@@ -33,6 +33,23 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, [token]);
 
+  // Auto-logout if the server reports a session conflict (logged in elsewhere)
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (res) => res,
+      (error) => {
+        if (error.response?.data?.code === "SESSION_CONFLICT") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setToken(null);
+          setUser(null);
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
+
   const login = async (username, password) => {
     try {
       const response = await axios.post(apiUrl("/auth/login"), {
@@ -57,11 +74,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken) {
+        await axios.post(apiUrl("/auth/logout"), {}, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+      }
+    } catch {
+      // Ignore errors — clear locally regardless
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setToken(null);
+      setUser(null);
+    }
   };
 
   const changePassword = async (currentPassword, newPassword) => {
