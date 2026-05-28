@@ -19,16 +19,17 @@ export default function Analytics() {
   const [barsReady, setBarsReady] = useState(false);
   const [showReport, setShowReport] = useState(false);
 
+  const todayStr = new Date().toISOString().split("T")[0];
+
   // "input" state — what the user is typing in the Custom picker (not sent to API yet)
-  const [startDate, setStartDate] = useState("");
-  const [endDate,   setEndDate]   = useState("");
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate,   setEndDate]   = useState(todayStr);
 
   // "applied" state — what is actually sent to the API
-  const [appliedStart, setAppliedStart] = useState("");
-  const [appliedEnd,   setAppliedEnd]   = useState("");
+  const [appliedStart, setAppliedStart] = useState(todayStr);
+  const [appliedEnd,   setAppliedEnd]   = useState(todayStr);
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const [activePreset, setActivePreset] = useState("all");
+  const [activePreset, setActivePreset] = useState("today");
   const [showCustom,   setShowCustom]   = useState(false);
 
   const applyPreset = (key) => {
