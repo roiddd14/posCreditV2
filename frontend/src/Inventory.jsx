@@ -33,11 +33,8 @@ function Inventory({ setToken }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  const [barcode, setBarcode] = useState("");
   const [category, setCategory] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [stockFilter, setStockFilter] = useState("all");
@@ -158,18 +155,6 @@ function Inventory({ setToken }) {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification("Image size must be less than 5MB", "error");
-        return;
-      }
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
   const handleEditImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -179,11 +164,6 @@ function Inventory({ setToken }) {
       }
       setEditingItem({ ...editingItem, newImage: file, imagePreview: URL.createObjectURL(file) });
     }
-  };
-
-  const removeImage = () => {
-    setImage(null);
-    setImagePreview(null);
   };
 
   const removeEditImage = () => {
@@ -205,10 +185,8 @@ function Inventory({ setToken }) {
       formData.append("name", name);
       formData.append("price", Number(price));
       formData.append("stock", Number(stock) || 0);
-      if (barcode) formData.append("barcode", barcode);
       const cleanCategory = normalizeCategory(category);
       if (cleanCategory) formData.append("category", cleanCategory);
-      if (image) formData.append("image", image);
 
       const res = await fetch(INVENTORY_API, {
         method: "POST",
@@ -225,10 +203,7 @@ function Inventory({ setToken }) {
       setName("");
       setPrice("");
       setStock("");
-      setBarcode("");
       setCategory("");
-      setImage(null);
-      setImagePreview(null);
       setShowAddModal(false);
       loadItems();
       showNotification("Item added successfully!");
@@ -744,27 +719,19 @@ function Inventory({ setToken }) {
           name={name}
           price={price}
           stock={stock}
-          barcode={barcode}
           category={category}
           existingCategories={activeCategories.filter(c => c !== "All")}
-          imagePreview={imagePreview}
           onNameChange={(e) => setName(e.target.value)}
           onPriceChange={(e) => setPrice(e.target.value)}
           onStockChange={(e) => setStock(Math.max(0, e.target.value))}
-          onBarcodeChange={(e) => setBarcode(e.target.value)}
           onCategoryChange={(e) => setCategory(e.target.value)}
-          onImageChange={handleImageChange}
-          onRemoveImage={removeImage}
           onSubmit={addItem}
           onClose={() => {
             setShowAddModal(false);
             setName("");
             setPrice("");
             setStock("");
-            setBarcode("");
             setCategory("");
-            setImage(null);
-            setImagePreview(null);
           }}
         />
       )}
@@ -1103,17 +1070,12 @@ function AddItemModal({
   name,
   price,
   stock,
-  barcode,
   category,
   existingCategories = [],
-  imagePreview,
   onNameChange,
   onPriceChange,
   onStockChange,
-  onBarcodeChange,
   onCategoryChange,
-  onImageChange,
-  onRemoveImage,
   onSubmit,
   onClose
 }) {
@@ -1153,7 +1115,6 @@ function AddItemModal({
                 Item Name
               </label>
               <input
-                placeholder="e.g., Laptop, Mouse, Keyboard"
                 className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${
                   isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
                 }`}
@@ -1198,22 +1159,6 @@ function AddItemModal({
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
-                Barcode (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., 1234567890123"
-                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${
-                  isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
-                }`}
-                value={barcode}
-                onChange={onBarcodeChange}
-                onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
                 Category (Optional)
               </label>
               <CategoryChooser
@@ -1223,48 +1168,6 @@ function AddItemModal({
                 onChange={onCategoryChange}
                 inputId="add-category"
               />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
-                Product Image (Optional)
-              </label>
-              <div className={`border-2 border-dashed rounded-xl p-3 transition-colors ${
-                isDarkMode ? "border-neutral-600 hover:border-neutral-500" : "border-neutral-300 hover:border-neutral-400"
-              }`}>
-                {imagePreview ? (
-                  <div className="relative">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="w-full max-h-40 object-contain rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={onRemoveImage}
-                      className="absolute top-2 right-2 bg-rose-600 text-white p-2 rounded-full hover:bg-rose-700 transition-colors shadow-lg"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer flex flex-col items-center justify-center py-8">
-                    <ImageIcon className={`w-12 h-12 mb-2 ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`} />
-                    <span className={`text-sm ${isDarkMode ? "text-neutral-400" : "text-neutral-600"}`}>
-                      Click to upload image
-                    </span>
-                    <span className={`text-xs mt-1 ${isDarkMode ? "text-neutral-500" : "text-neutral-500"}`}>
-                      PNG, JPG, GIF up to 5MB
-                    </span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={onImageChange}
-                    />
-                  </label>
-                )}
-              </div>
             </div>
           </div>
 
