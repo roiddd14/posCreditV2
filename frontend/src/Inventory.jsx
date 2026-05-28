@@ -34,6 +34,8 @@ function Inventory({ setToken }) {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [category, setCategory] = useState("");
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -155,6 +157,23 @@ function Inventory({ setToken }) {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification("Image size must be less than 5MB", "error");
+        return;
+      }
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    setImagePreview(null);
+  };
+
   const handleEditImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -178,7 +197,7 @@ function Inventory({ setToken }) {
   const addItem = async (e) => {
     e.preventDefault();
 
-    if (!name || !price) return;
+    if (!name || !price || !image) return;
 
     try {
       const formData = new FormData();
@@ -187,6 +206,7 @@ function Inventory({ setToken }) {
       formData.append("stock", Number(stock) || 0);
       const cleanCategory = normalizeCategory(category);
       if (cleanCategory) formData.append("category", cleanCategory);
+      formData.append("image", image);
 
       const res = await fetch(INVENTORY_API, {
         method: "POST",
@@ -204,6 +224,8 @@ function Inventory({ setToken }) {
       setPrice("");
       setStock("");
       setCategory("");
+      setImage(null);
+      setImagePreview(null);
       setShowAddModal(false);
       loadItems();
       showNotification("Item added successfully!");
@@ -721,10 +743,13 @@ function Inventory({ setToken }) {
           stock={stock}
           category={category}
           existingCategories={activeCategories.filter(c => c !== "All")}
+          imagePreview={imagePreview}
           onNameChange={(e) => setName(e.target.value)}
           onPriceChange={(e) => setPrice(e.target.value)}
           onStockChange={(e) => setStock(Math.max(0, e.target.value))}
           onCategoryChange={(e) => setCategory(e.target.value)}
+          onImageChange={handleImageChange}
+          onRemoveImage={removeImage}
           onSubmit={addItem}
           onClose={() => {
             setShowAddModal(false);
@@ -732,6 +757,8 @@ function Inventory({ setToken }) {
             setPrice("");
             setStock("");
             setCategory("");
+            setImage(null);
+            setImagePreview(null);
           }}
         />
       )}
@@ -1072,10 +1099,13 @@ function AddItemModal({
   stock,
   category,
   existingCategories = [],
+  imagePreview,
   onNameChange,
   onPriceChange,
   onStockChange,
   onCategoryChange,
+  onImageChange,
+  onRemoveImage,
   onSubmit,
   onClose
 }) {
@@ -1168,6 +1198,51 @@ function AddItemModal({
                 onChange={onCategoryChange}
                 inputId="add-category"
               />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
+                Product Image <span className="text-rose-500">*</span>
+              </label>
+              <div className={`border-2 border-dashed rounded-xl p-3 transition-colors ${
+                imagePreview
+                  ? isDarkMode ? "border-orange-500/50" : "border-orange-400"
+                  : isDarkMode ? "border-neutral-600 hover:border-orange-500/50" : "border-neutral-300 hover:border-orange-400"
+              }`}>
+                {imagePreview ? (
+                  <div className="relative">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full max-h-40 object-contain rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={onRemoveImage}
+                      className="absolute top-2 right-2 bg-rose-600 text-white p-2 rounded-full hover:bg-rose-700 transition-colors shadow-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex flex-col items-center justify-center py-8">
+                    <ImageIcon className={`w-12 h-12 mb-2 ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`} />
+                    <span className={`text-sm font-medium ${isDarkMode ? "text-neutral-400" : "text-neutral-600"}`}>
+                      Click to upload image
+                    </span>
+                    <span className={`text-xs mt-1 ${isDarkMode ? "text-neutral-500" : "text-neutral-500"}`}>
+                      PNG, JPG, GIF up to 5MB
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      required
+                      onChange={onImageChange}
+                    />
+                  </label>
+                )}
+              </div>
             </div>
           </div>
 
