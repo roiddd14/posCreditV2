@@ -172,23 +172,40 @@ function OrderTransaction() {
         .map((item) => {
           if (item._id === itemId) {
             const newQuantity = item.quantity + change;
-            
+
             if (newQuantity <= 0) {
               return null;
             }
-            
+
             const inventoryItem = inventory.find(inv => inv._id === itemId);
             if (newQuantity > inventoryItem.stock) {
               showNotification(`Only ${inventoryItem.stock} items available`);
               return item;
             }
-            
+
             return { ...item, quantity: newQuantity };
           }
           return item;
         })
         .filter(Boolean)
     );
+  };
+
+  const setQuantityDirectly = (itemId, rawValue) => {
+    const parsed = parseInt(rawValue, 10);
+    if (isNaN(parsed) || parsed <= 0) {
+      // Remove item if cleared or zero
+      setCart(cart.filter((item) => item._id !== itemId));
+      return;
+    }
+    const inventoryItem = inventory.find((inv) => inv._id === itemId);
+    const clamped = inventoryItem ? Math.min(parsed, inventoryItem.stock) : parsed;
+    if (inventoryItem && parsed > inventoryItem.stock) {
+      showNotification(`Only ${inventoryItem.stock} items available`);
+    }
+    setCart(cart.map((item) =>
+      item._id === itemId ? { ...item, quantity: clamped } : item
+    ));
   };
 
   const calculateTotal = () => {
@@ -692,11 +709,27 @@ function OrderTransaction() {
                         >
                           <Minus className="w-4 h-4" />
                         </button>
-                        <span className={`w-12 text-center font-bold text-lg ${
-                          isDarkMode ? "text-white" : "text-neutral-800"
-                        }`}>
-                          {item.quantity}
-                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="999"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const val = e.target.value.slice(0, 3);
+                            setCart(cart.map((c) =>
+                              c._id === item._id ? { ...c, quantity: val === "" ? "" : Number(val) } : c
+                            ));
+                          }}
+                          onBlur={(e) => setQuantityDirectly(item._id, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.target.blur();
+                          }}
+                          className={`w-14 text-center font-bold text-lg rounded-lg border-2 focus:outline-none focus:border-orange-500 transition-all ${
+                            isDarkMode
+                              ? "bg-neutral-700 border-neutral-600 text-white"
+                              : "bg-white border-neutral-300 text-neutral-800"
+                          }`}
+                        />
                         <button
                           onClick={() => updateQuantity(item._id, 1)}
                           className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold transition-all shadow-md ${
