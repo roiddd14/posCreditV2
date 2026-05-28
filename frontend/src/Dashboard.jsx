@@ -610,6 +610,7 @@ function Dashboard({ setToken }) {
                 onViewDetails={() => openCustomerDetail(customer)}
                 onEdit={(e) => { e.stopPropagation(); openEditCustomerModal(customer); }}
                 onRecordPayment={(e) => { e.stopPropagation(); openModal(customer); }}
+                onArchive={() => openDeleteModal(customer)}
               />
             ))}
           </div>
@@ -818,7 +819,7 @@ function getInitials(name = "") {
   return name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-function CustomerCard({ customer, isDarkMode, onViewDetails, onEdit, onRecordPayment }) {
+function CustomerCard({ customer, isDarkMode, onViewDetails, onEdit, onRecordPayment, onArchive }) {
   const hasBalance = customer.balance > 0;
   const usagePct   = customer.creditLimit > 0
     ? Math.min((customer.balance / customer.creditLimit) * 100, 100)
@@ -929,6 +930,15 @@ function CustomerCard({ customer, isDarkMode, onViewDetails, onEdit, onRecordPay
         >
           <Edit2 className="w-3.5 h-3.5" />
           Edit
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onArchive(); }}
+          title="Archive customer"
+          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 active:scale-95 ${
+            isDarkMode ? "bg-rose-500/15 text-rose-400 hover:bg-rose-500/25" : "bg-rose-50 text-rose-600 hover:bg-rose-100"
+          }`}
+        >
+          <Archive className="w-3.5 h-3.5" />
         </button>
       </div>
       </div>
