@@ -28,6 +28,9 @@ const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173,http:
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// Also allow all Vercel preview/production URLs for this project
+const VERCEL_PROJECT_PATTERN = /^https:\/\/pos-credit-v2[a-z0-9-]*\.vercel\.app$/;
+
 // ✅ ENABLE CORS (THIS FIXES YOUR ERROR)
 app.disable("x-powered-by");
 
@@ -44,7 +47,7 @@ app.use((req, res, next) => {
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || VERCEL_PROJECT_PATTERN.test(origin)) {
       return callback(null, true);
     }
     return callback(new Error("Not allowed by CORS"));
