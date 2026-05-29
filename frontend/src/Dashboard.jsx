@@ -1039,7 +1039,7 @@ function EditCustomerModal({ form, isDarkMode, onChange, onSubmit, onClose }) {
             </div>
             <div>
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
-                Credit Limit <span className={`font-normal text-xs ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>(optional)</span>
+                Credit Limit
               </label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
