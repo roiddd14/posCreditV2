@@ -180,8 +180,11 @@ function Dashboard({ setToken }) {
     if (!trimmedName) { showNotification("Please enter a customer name", "error"); return; }
     if (!trimmedFullName) { showNotification("Please enter customer's full name", "error"); return; }
     const creditLimitVal = Number(editCustomerForm.creditLimit);
-    if (editCustomerForm.creditLimit === "" || isNaN(creditLimitVal)) { showNotification("Please enter a credit limit", "error"); return; }
-    if (creditLimitVal < 100) { showNotification("Credit limit must be at least ₱100", "error"); return; }
+    const isFullyPaid = !customerToEdit.balance || customerToEdit.balance <= 0;
+    if (isFullyPaid) {
+      if (editCustomerForm.creditLimit === "" || isNaN(creditLimitVal)) { showNotification("Please enter a credit limit", "error"); return; }
+      if (creditLimitVal < 100) { showNotification("Credit limit must be at least ₱100", "error"); return; }
+    }
 
     try {
       const response = await fetch(`${CUSTOMER_API}/${customerToEdit._id}`, {
@@ -667,6 +670,7 @@ function Dashboard({ setToken }) {
           isDarkMode={isDarkMode}
           onChange={setEditCustomerForm}
           onSubmit={updateCustomerInfo}
+          customerBalance={customerToEdit.balance}
           onClose={() => { setShowEditCustomerModal(false); setCustomerToEdit(null); }}
         />
       )}
@@ -1010,7 +1014,8 @@ function AddCustomerModal({ name, fullName, creditLimit, isDarkMode, onNameChang
 }
 
 /* ── Customer Detail Modal ─────────────────────────────────── */
-function EditCustomerModal({ form, isDarkMode, onChange, onSubmit, onClose }) {
+function EditCustomerModal({ form, isDarkMode, onChange, onSubmit, onClose, customerBalance }) {
+  const isFullyPaid = !customerBalance || customerBalance <= 0;
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-in fade-in duration-300">
       <div className={`rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in duration-300 ${isDarkMode ? "bg-neutral-800" : "bg-white"}`}>
@@ -1046,9 +1051,22 @@ function EditCustomerModal({ form, isDarkMode, onChange, onSubmit, onClose }) {
               </label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
-                <input type="number" min="100" step="0.01" required value={form.creditLimit} onChange={(e) => onChange({ ...form, creditLimit: e.target.value })}
-                  className={`w-full border-2 pl-8 pr-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"}`} />
+                <input
+                  type="number" min="100" step="0.01" required
+                  value={form.creditLimit}
+                  onChange={(e) => isFullyPaid && onChange({ ...form, creditLimit: e.target.value })}
+                  disabled={!isFullyPaid}
+                  className={`w-full border-2 pl-8 pr-4 py-3 rounded-xl focus:outline-none transition-all ${
+                    isFullyPaid
+                      ? `focus:border-orange-500 ${isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"}`
+                      : `cursor-not-allowed opacity-50 ${isDarkMode ? "bg-neutral-800 border-neutral-700 text-neutral-400" : "bg-neutral-100 border-neutral-200 text-neutral-400"}`
+                  }`} />
               </div>
+              {!isFullyPaid && (
+                <p className="mt-1.5 text-xs text-rose-400 flex items-center gap-1">
+                  <span>⚠</span> Credit limit can only be changed when the balance is fully paid.
+                </p>
+              )}
             </div>
           </div>
 
