@@ -1095,7 +1095,8 @@ function CustomerDetailModal({ customer, history, historyLoading, isDarkMode, on
 
   const handleSaveLimit = async () => {
     const val = Number(limitInput);
-    if (isNaN(val) || val < 0) return;
+    if (customer?.balance > 0) return;
+    if (isNaN(val) || val < 100) return;
     setSaving(true);
     const ok = await onUpdateCreditLimit(customer._id, val);
     setSaving(false);
@@ -1152,12 +1153,18 @@ function CustomerDetailModal({ customer, history, historyLoading, isDarkMode, on
                 <p className={`text-sm font-semibold ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>Credit Limit</p>
               </div>
               {!editingLimit && (
-                <button
-                  onClick={() => { setLimitInput(customer?.creditLimit ?? 0); setEditingLimit(true); }}
-                  className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${isDarkMode ? "bg-neutral-700 text-orange-400 hover:bg-neutral-600" : "bg-orange-100 text-orange-700 hover:bg-orange-200"}`}
-                >
-                  Edit
-                </button>
+                customer?.balance > 0 ? (
+                  <span className={`text-xs px-3 py-1 rounded-lg font-semibold flex items-center gap-1 ${isDarkMode ? "bg-neutral-700 text-neutral-500" : "bg-neutral-100 text-neutral-400"}`}>
+                    🔒 Locked
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => { setLimitInput(customer?.creditLimit ?? 0); setEditingLimit(true); }}
+                    className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${isDarkMode ? "bg-neutral-700 text-orange-400 hover:bg-neutral-600" : "bg-orange-100 text-orange-700 hover:bg-orange-200"}`}
+                  >
+                    Edit
+                  </button>
+                )
               )}
             </div>
             {editingLimit ? (
