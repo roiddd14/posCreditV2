@@ -1161,12 +1161,14 @@ function AddItemModal({
               <input
                 type="number"
                 step="0.01"
+                min="0"
+                max="99999"
                 placeholder="0.00"
-                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${
+                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
                   isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
                 }`}
                 value={price}
-                onChange={onPriceChange}
+                onChange={(e) => { if (e.target.value === "" || /^\d{0,5}(\.\d{0,2})?$/.test(e.target.value)) onPriceChange(e); }}
                 required
               />
             </div>
@@ -1178,12 +1180,13 @@ function AddItemModal({
               <input
                 type="number"
                 min="0"
+                max="99999"
                 placeholder="0"
-                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${
+                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
                   isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
                 }`}
                 value={stock}
-                onChange={onStockChange}
+                onChange={(e) => { if (e.target.value === "" || /^\d{0,5}$/.test(e.target.value)) onStockChange(e); }}
               />
             </div>
 
@@ -1329,12 +1332,14 @@ function EditItemModal({ isDarkMode, item, existingCategories = [], onItemChange
               <input
                 type="number"
                 step="0.01"
+                min="0"
+                max="99999"
                 placeholder="0.00"
-                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${
+                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
                   isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
                 }`}
                 value={item.price}
-                onChange={(e) => onItemChange({ ...item, price: e.target.value })}
+                onChange={(e) => { if (e.target.value === "" || /^\d{0,5}(\.\d{0,2})?$/.test(e.target.value)) onItemChange({ ...item, price: e.target.value }); }}
                 required
               />
             </div>
@@ -1346,12 +1351,13 @@ function EditItemModal({ isDarkMode, item, existingCategories = [], onItemChange
               <input
                 type="number"
                 min="0"
+                max="99999"
                 placeholder="0"
-                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${
+                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
                   isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
                 }`}
                 value={item.stock}
-                onChange={(e) => onItemChange({ ...item, stock: Math.max(0, e.target.value) })}
+                onChange={(e) => { if (e.target.value === "" || /^\d{0,5}$/.test(e.target.value)) onItemChange({ ...item, stock: e.target.value }); }}
                 required
               />
             </div>
