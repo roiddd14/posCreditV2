@@ -33,12 +33,13 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, [token]);
 
-  // Auto-logout if the server reports a session conflict (logged in elsewhere)
+  // Auto-logout if the server reports the token is no longer valid (e.g. expired or deleted account)
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (res) => res,
       (error) => {
-        if (error.response?.data?.code === "SESSION_CONFLICT") {
+        const code = error.response?.data?.code;
+        if (code === "TOKEN_EXPIRED" || code === "INVALID_TOKEN" || code === "USER_NOT_FOUND") {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           setToken(null);

@@ -24,20 +24,6 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Block login if there is already an active (non-expired) session
-    if (user.activeToken) {
-      try {
-        jwt.verify(user.activeToken, process.env.JWT_SECRET);
-        // Token is still valid — another device is logged in
-        return res.status(401).json({
-          message: "This account is already logged in on another device. Please log out there first.",
-          code: "ALREADY_LOGGED_IN",
-        });
-      } catch {
-        // Stored token is expired — allow login to proceed
-      }
-    }
-
     const token = jwt.sign(
       { id: user._id, username: user.username, role: normalizeRole(user.role) },
       process.env.JWT_SECRET,

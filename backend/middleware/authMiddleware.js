@@ -43,14 +43,6 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // Enforce single active session — reject if token doesn't match stored session
-    if (user.activeToken && user.activeToken !== token) {
-      return res.status(401).json({
-        message: "Your session was ended because this account logged in on another device.",
-        code: "SESSION_CONFLICT",
-      });
-    }
-
     // Attach user to request with both id and _id for compatibility
     req.user = {
       ...decoded,
