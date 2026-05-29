@@ -37,6 +37,7 @@ function OrderTransaction() {
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [lastTransaction, setLastTransaction] = useState(null);
+  const [lastCashTendered, setLastCashTendered] = useState("");
   const [loading, setLoading] = useState(false);
   const [inventoryLoading, setInventoryLoading] = useState(true);
   const [recentlyAdded, setRecentlyAdded] = useState(new Set());
@@ -277,6 +278,7 @@ function OrderTransaction() {
 
       const transaction = response.data.transaction;
       setLastTransaction(transaction);
+      setLastCashTendered(cashTendered);
       setCart([]);
       setSelectedCustomer(null);
       setCashCustomerName("");
@@ -954,11 +956,18 @@ function OrderTransaction() {
                   <input
                     type="number"
                     min="0"
+                    max="99999"
                     step="0.01"
                     value={cashTendered}
-                    onChange={(e) => setCashTendered(e.target.value)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      // block if integer part exceeds 5 digits
+                      if (raw === "" || /^\d{0,5}(\.\d{0,2})?$/.test(raw)) {
+                        setCashTendered(raw);
+                      }
+                    }}
                     placeholder="0.00"
-                    className={`w-full border-2 pl-7 pr-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all font-semibold text-sm ${
+                    className={`w-full border-2 pl-7 pr-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all font-semibold text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
                       cashTendered && parseFloat(cashTendered) < cartTotal
                         ? isDarkMode
                           ? "bg-rose-950/30 border-rose-500 text-rose-300"
@@ -1101,6 +1110,7 @@ function OrderTransaction() {
         <ReceiptModal
           isDarkMode={isDarkMode}
           transaction={lastTransaction}
+          cashTendered={lastCashTendered}
           onClose={() => setShowReceiptModal(false)}
         />
       )}
@@ -1278,7 +1288,9 @@ function CustomerModal({ isDarkMode, customers, onSelectCustomer, onClose }) {
 }
 
 // Receipt Modal Component
-function ReceiptModal({ isDarkMode, transaction, onClose }) {
+function ReceiptModal({ isDarkMode, transaction, onClose, cashTendered }) {
+  const tendered = parseFloat(cashTendered) || 0;
+  const change = tendered - (transaction?.total || 0);
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
       <div className={`w-full max-w-md rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300 ${isDarkMode ? "bg-neutral-800" : "bg-white"}`}>
@@ -1384,8 +1396,9 @@ function ReceiptModal({ isDarkMode, transaction, onClose }) {
             ))}
           </div>
 
-          <div className={`p-4 rounded-xl ${isDarkMode ? "bg-neutral-700" : "bg-neutral-100"}`}>
-            <div className="flex justify-between items-center">
+          <div className={`rounded-xl overflow-hidden ${isDarkMode ? "bg-neutral-700" : "bg-neutral-100"}`}>
+            {/* Total row */}
+            <div className="flex justify-between items-center px-4 pt-4 pb-2">
               <span className={`font-semibold ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
                 TOTAL
               </span>
@@ -1393,6 +1406,35 @@ function ReceiptModal({ isDarkMode, transaction, onClose }) {
                 ₱{transaction.total.toFixed(2)}
               </span>
             </div>
+            {/* Cash Tendered + Change — only for cash payments */}
+            {transaction.paymentType === "cash" && tendered > 0 && (
+              <>
+                <div className={`mx-4 border-t ${isDarkMode ? "border-neutral-600" : "border-neutral-200"}`} />
+                <div className="flex justify-between items-center px-4 py-2">
+                  <span className={`text-sm font-medium ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>
+                    Cash Tendered
+                  </span>
+                  <span className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-neutral-800"}`}>
+                    ₱{tendered.toFixed(2)}
+                  </span>
+                </div>
+                <div className={`mx-4 border-t ${isDarkMode ? "border-neutral-600" : "border-neutral-200"}`} />
+                <div className={`flex justify-between items-center px-4 py-3 rounded-b-xl ${
+                  isDarkMode ? "bg-emerald-900/30" : "bg-emerald-50"
+                }`}>
+                  <span className={`text-sm font-bold uppercase tracking-wide ${
+                    isDarkMode ? "text-emerald-400" : "text-emerald-700"
+                  }`}>
+                    Change
+                  </span>
+                  <span className={`text-xl font-black ${
+                    isDarkMode ? "text-emerald-400" : "text-emerald-700"
+                  }`}>
+                    ₱{change.toFixed(2)}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

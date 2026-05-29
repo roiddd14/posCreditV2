@@ -990,7 +990,9 @@ function AddCustomerModal({ name, fullName, creditLimit, isDarkMode, onNameChang
               </label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
-                <input type="number" min="0.01" step="0.01" placeholder="0.00" value={creditLimit} onChange={onCreditLimitChange} required
+                <input type="number" min="0.01" max="99999" step="0.01" placeholder="0.00" value={creditLimit}
+                  onChange={(e) => { if (e.target.value === "" || /^\d{0,5}(\.\d{0,2})?$/.test(e.target.value)) onCreditLimitChange(e); }}
+                  required
                   className={`w-full border-2 pl-8 pr-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"}`} />
               </div>
             </div>
@@ -1052,9 +1054,9 @@ function EditCustomerModal({ form, isDarkMode, onChange, onSubmit, onClose, cust
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
                 <input
-                  type="number" min="100" step="0.01" required
+                  type="number" min="100" max="99999" step="0.01" required
                   value={form.creditLimit}
-                  onChange={(e) => isFullyPaid && onChange({ ...form, creditLimit: e.target.value })}
+                  onChange={(e) => { if (isFullyPaid && (e.target.value === "" || /^\d{0,5}(\.\d{0,2})?$/.test(e.target.value))) onChange({ ...form, creditLimit: e.target.value }); }}
                   disabled={!isFullyPaid}
                   className={`w-full border-2 pl-8 pr-4 py-3 rounded-xl focus:outline-none transition-all ${
                     isFullyPaid
@@ -1171,7 +1173,9 @@ function CustomerDetailModal({ customer, history, historyLoading, isDarkMode, on
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
-                  <input type="number" min="0" step="0.01" value={limitInput} onChange={(e) => setLimitInput(e.target.value)} autoFocus
+                  <input type="number" min="100" max="99999" step="0.01" value={limitInput}
+                    onChange={(e) => { if (e.target.value === "" || /^\d{0,5}(\.\d{0,2})?$/.test(e.target.value)) setLimitInput(e.target.value); }}
+                    autoFocus
                     className={`w-full border-2 pl-7 pr-3 py-2 rounded-xl focus:outline-none focus:border-orange-500 text-sm font-semibold transition-all ${isDarkMode ? "bg-neutral-700 border-neutral-600 text-white" : "bg-white border-orange-200 text-neutral-800"}`} />
                 </div>
                 <button onClick={handleSaveLimit} disabled={saving}
