@@ -46,6 +46,7 @@ function OrderTransaction() {
   const [notification, setNotification] = useState(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [cashCustomerName, setCashCustomerName] = useState("");
+  const [cashTendered, setCashTendered] = useState("");
 
   useEffect(() => {
     fetchInventory();
@@ -224,6 +225,14 @@ function OrderTransaction() {
     }
 
     const total = calculateTotal();
+
+    if (paymentType === "cash") {
+      const tendered = parseFloat(cashTendered);
+      if (!cashTendered || isNaN(tendered) || tendered < total) {
+        showNotification(`Cash tendered must be at least ₱${total.toFixed(2)}`);
+        return;
+      }
+    }
     const creditLimit = Number(selectedCustomer?.creditLimit) || 0;
     const currentCredit = Number(selectedCustomer?.balance) || 0;
     const remainingCredit = Math.max(creditLimit - currentCredit, 0);
@@ -271,6 +280,7 @@ function OrderTransaction() {
       setCart([]);
       setSelectedCustomer(null);
       setCashCustomerName("");
+      setCashTendered("");
       setShowReceiptModal(true);
 
       fetchInventory();
@@ -791,6 +801,7 @@ function OrderTransaction() {
                   onClick={() => {
                     setPaymentType("cash");
                     setSelectedCustomer(null);
+                    setCashTendered("");
                   }}
                   className={`p-3 rounded-xl border-2 flex items-center justify-center gap-2 font-semibold transition-all shadow-lg transform hover:scale-105 active:scale-95 ${
                     paymentType === "cash"
@@ -928,10 +939,66 @@ function OrderTransaction() {
               </div>
             )}
 
+            {/* Cash Tendered */}
+            {paymentType === "cash" && (
+              <div>
+                <label className={`block text-xs font-bold mb-2 uppercase tracking-wider ${
+                  isDarkMode ? "text-neutral-300" : "text-neutral-700"
+                }`}>
+                  Cash Tendered
+                </label>
+                <div className="relative">
+                  <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm ${
+                    isDarkMode ? "text-neutral-400" : "text-neutral-500"
+                  }`}>₱</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={cashTendered}
+                    onChange={(e) => setCashTendered(e.target.value)}
+                    placeholder="0.00"
+                    className={`w-full border-2 pl-7 pr-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all font-semibold text-sm ${
+                      cashTendered && parseFloat(cashTendered) < cartTotal
+                        ? isDarkMode
+                          ? "bg-rose-950/30 border-rose-500 text-rose-300"
+                          : "bg-rose-50 border-rose-400 text-rose-700"
+                        : isDarkMode
+                        ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400"
+                        : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
+                    }`}
+                  />
+                </div>
+                {/* Change */}
+                {cashTendered !== "" && !isNaN(parseFloat(cashTendered)) && (
+                  <div className={`mt-2 p-3 rounded-xl flex justify-between items-center ${
+                    parseFloat(cashTendered) >= cartTotal
+                      ? isDarkMode ? "bg-emerald-900/30 border border-emerald-700" : "bg-emerald-50 border border-emerald-200"
+                      : isDarkMode ? "bg-rose-900/30 border border-rose-700" : "bg-rose-50 border border-rose-200"
+                  }`}>
+                    <span className={`text-xs font-bold uppercase tracking-wide ${
+                      parseFloat(cashTendered) >= cartTotal
+                        ? isDarkMode ? "text-emerald-400" : "text-emerald-700"
+                        : isDarkMode ? "text-rose-400" : "text-rose-600"
+                    }`}>
+                      {parseFloat(cashTendered) >= cartTotal ? "Change" : "Short by"}
+                    </span>
+                    <span className={`text-lg font-black ${
+                      parseFloat(cashTendered) >= cartTotal
+                        ? isDarkMode ? "text-emerald-400" : "text-emerald-700"
+                        : isDarkMode ? "text-rose-400" : "text-rose-600"
+                    }`}>
+                      ₱{Math.abs(parseFloat(cashTendered) - cartTotal).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Total */}
             <div className={`p-4 rounded-xl shadow-lg ${
-              isDarkMode 
-                ? "bg-gradient-to-br from-neutral-700 to-neutral-600" 
+              isDarkMode
+                ? "bg-gradient-to-br from-neutral-700 to-neutral-600"
                 : "bg-gradient-to-br from-neutral-100 to-neutral-200"
             }`}>
               <div className="flex justify-between items-center">
@@ -959,7 +1026,10 @@ function OrderTransaction() {
             ) : (
               <button
                 onClick={handleCheckout}
-                disabled={cart.length === 0 || loading || isCreditLimitExceeded}
+                disabled={
+                  cart.length === 0 || loading || isCreditLimitExceeded ||
+                  (paymentType === "cash" && (!cashTendered || parseFloat(cashTendered) < cartTotal))
+                }
                 className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold text-base hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl hover:shadow-orange-500/30"
               >
                 {cart.length === 0 ? (
