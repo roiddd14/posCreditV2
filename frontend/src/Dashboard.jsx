@@ -179,6 +179,9 @@ function Dashboard({ setToken }) {
     const trimmedFullName = editCustomerForm.fullName.trim();
     if (!trimmedName) { showNotification("Please enter a customer name", "error"); return; }
     if (!trimmedFullName) { showNotification("Please enter customer's full name", "error"); return; }
+    const creditLimitVal = Number(editCustomerForm.creditLimit);
+    if (editCustomerForm.creditLimit === "" || isNaN(creditLimitVal)) { showNotification("Please enter a credit limit", "error"); return; }
+    if (creditLimitVal < 100) { showNotification("Credit limit must be at least ₱100", "error"); return; }
 
     try {
       const response = await fetch(`${CUSTOMER_API}/${customerToEdit._id}`, {
@@ -187,7 +190,7 @@ function Dashboard({ setToken }) {
         body: JSON.stringify({
           name: trimmedName,
           fullName: trimmedFullName,
-          creditLimit: editCustomerForm.creditLimit !== "" ? Number(editCustomerForm.creditLimit) : 0,
+          creditLimit: creditLimitVal,
         }),
       });
 
@@ -1043,7 +1046,7 @@ function EditCustomerModal({ form, isDarkMode, onChange, onSubmit, onClose }) {
               </label>
               <div className="relative">
                 <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
-                <input type="number" min="0" step="0.01" value={form.creditLimit} onChange={(e) => onChange({ ...form, creditLimit: e.target.value })}
+                <input type="number" min="100" step="0.01" required value={form.creditLimit} onChange={(e) => onChange({ ...form, creditLimit: e.target.value })}
                   className={`w-full border-2 pl-8 pr-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all ${isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"}`} />
               </div>
             </div>
