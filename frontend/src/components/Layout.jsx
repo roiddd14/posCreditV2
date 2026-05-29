@@ -8,7 +8,7 @@ function Layout({ children }) {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pt-16 lg:pt-0">
         {children}
       </div>
 

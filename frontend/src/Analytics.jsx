@@ -159,7 +159,7 @@ export default function Analytics() {
         <div className="max-w-7xl mx-auto space-y-4">
 
           {/* Title row */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 pl-14 lg:pl-0">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-xl ${isDarkMode ? "bg-orange-900/30" : "bg-orange-100"}`}>
                 <BarChart3 className="w-6 h-6 text-orange-600" />
@@ -219,7 +219,7 @@ export default function Analytics() {
           {/* Custom date inputs — only shown when Custom is active */}
           {showCustom && (
             <div className="flex items-center gap-2 flex-wrap">
-              <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border ${isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"}`}>
+              <div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-xl border w-full sm:w-auto ${isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"}`}>
                 <Calendar className={`w-4 h-4 flex-shrink-0 ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`} />
                 <input
                   type="date"
@@ -227,7 +227,7 @@ export default function Analytics() {
                   max={endDate || todayStr}
                   onChange={(e) => setStartDate(e.target.value)}
                   style={{ colorScheme: isDarkMode ? "dark" : "light" }}
-                  className={`text-sm font-medium bg-transparent focus:outline-none ${isDarkMode ? "text-white" : "text-neutral-800"}`}
+                  className={`text-sm font-medium bg-transparent focus:outline-none flex-1 min-w-0 ${isDarkMode ? "text-white" : "text-neutral-800"}`}
                 />
                 <span className={`text-sm ${isDarkMode ? "text-neutral-600" : "text-neutral-300"}`}>→</span>
                 <input
@@ -237,13 +237,13 @@ export default function Analytics() {
                   max={todayStr}
                   onChange={(e) => setEndDate(e.target.value)}
                   style={{ colorScheme: isDarkMode ? "dark" : "light" }}
-                  className={`text-sm font-medium bg-transparent focus:outline-none ${isDarkMode ? "text-white" : "text-neutral-800"}`}
+                  className={`text-sm font-medium bg-transparent focus:outline-none flex-1 min-w-0 ${isDarkMode ? "text-white" : "text-neutral-800"}`}
                 />
               </div>
               <button
                 onClick={applyCustomRange}
                 disabled={!startDate && !endDate}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm w-full sm:w-auto"
               >
                 Apply
               </button>
@@ -372,13 +372,13 @@ const KPI_COLORS = {
 function KPICard({ label, value, sub, icon: Icon, color, isDarkMode }) {
   const c = KPI_COLORS[color];
   return (
-    <div className={`rounded-2xl border p-5 shadow-sm transition-all hover:shadow-md ${isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"}`}>
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${c.bg}`}>
-        <Icon className={`w-5 h-5 ${c.icon}`} />
+    <div className={`rounded-2xl border p-3 sm:p-5 shadow-sm transition-all hover:shadow-md ${isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"}`}>
+      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-2 sm:mb-4 ${c.bg}`}>
+        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${c.icon}`} />
       </div>
-      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>{label}</p>
-      <p className={`text-2xl font-black leading-none mb-1.5 ${isDarkMode ? "text-white" : "text-neutral-900"}`}>{value}</p>
-      {sub && <p className={`text-xs ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>{sub}</p>}
+      <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1 truncate ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>{label}</p>
+      <p className={`text-lg sm:text-2xl font-black leading-none mb-1 truncate ${isDarkMode ? "text-white" : "text-neutral-900"}`}>{value}</p>
+      {sub && <p className={`text-[10px] sm:text-xs hidden sm:block ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>{sub}</p>}
     </div>
   );
 }

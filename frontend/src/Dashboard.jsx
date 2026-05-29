@@ -432,7 +432,7 @@ function Dashboard({ setToken }) {
 
       {/* ── Header ─────────────────────────────────────────── */}
       <div className={`pt-8 pb-10 px-4 sm:px-6 lg:px-8 ${isDarkMode ? "bg-neutral-800/50" : "bg-white shadow-sm"}`}>
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-end justify-between gap-6 pl-14 lg:pl-0">
           <div className="flex items-start gap-4">
             <div className={`p-3 rounded-2xl flex-shrink-0 ${isDarkMode ? "bg-orange-900/30" : "bg-orange-100"}`}>
               <Users className="w-8 h-8 text-orange-600" />
@@ -538,7 +538,7 @@ function Dashboard({ setToken }) {
 
         {!showArchived && <>
         {/* ── Stat Cards ─────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <KPICard label="Total Customers" value={customers.length} sub="registered accounts" icon={Users} color="orange" isDarkMode={isDarkMode} />
           <KPICard label="With Balance" value={totalCreditors} sub="active creditors" icon={AlertCircle} color="rose" isDarkMode={isDarkMode} />
           <KPICard label="Fully Paid" value={totalPaid} sub="settled accounts" icon={CheckCircle} color="emerald" isDarkMode={isDarkMode} />
@@ -839,15 +839,15 @@ function KPICard({ label, value, sub, icon: Icon, color, isDarkMode }) {
       : value;
 
   return (
-    <div className={`rounded-2xl border p-5 shadow-sm transition-all ${isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-white border-neutral-200"}`}>
-      <div className="flex items-center gap-3">
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.bg}`}>
-          <Icon className={`w-5 h-5 ${c.icon}`} />
+    <div className={`rounded-2xl border p-3 sm:p-5 shadow-sm transition-all ${isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-white border-neutral-200"}`}>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.bg}`}>
+          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${c.icon}`} />
         </div>
         <div className="min-w-0">
-          <p className={`text-xs font-bold uppercase tracking-wide ${isDarkMode ? "text-neutral-500" : "text-neutral-500"}`}>{label}</p>
-          <p className={`font-black truncate text-2xl ${isDarkMode ? "text-white" : "text-neutral-900"}`}>{displayValue}</p>
-          {sub && <p className={`text-xs mt-0.5 ${isDarkMode ? "text-neutral-500" : "text-neutral-500"}`}>{sub}</p>}
+          <p className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide truncate ${isDarkMode ? "text-neutral-500" : "text-neutral-500"}`}>{label}</p>
+          <p className={`font-black truncate text-lg sm:text-2xl ${isDarkMode ? "text-white" : "text-neutral-900"}`}>{displayValue}</p>
+          {sub && <p className={`text-[10px] sm:text-xs mt-0.5 hidden sm:block ${isDarkMode ? "text-neutral-500" : "text-neutral-500"}`}>{sub}</p>}
         </div>
       </div>
     </div>

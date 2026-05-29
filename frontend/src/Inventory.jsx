@@ -437,7 +437,7 @@ function Inventory({ setToken }) {
     <div className={`min-h-screen pb-20 transition-colors duration-300 ${isDarkMode ? "bg-neutral-900" : "bg-neutral-50"}`}>
       <div className={`pt-8 pb-10 px-4 sm:px-6 lg:px-8 ${isDarkMode ? "bg-neutral-800/50" : "bg-white shadow-sm"}`}>
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pl-14 lg:pl-0">
             <div className="flex items-start gap-4">
               <div className={`p-3 rounded-2xl flex-shrink-0 ${isDarkMode ? "bg-orange-900/30" : "bg-orange-100"}`}>
                 <Package className="w-8 h-8 text-orange-600" />

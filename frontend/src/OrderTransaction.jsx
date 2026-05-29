@@ -48,6 +48,7 @@ function OrderTransaction() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [cashCustomerName, setCashCustomerName] = useState("");
   const [cashTendered, setCashTendered] = useState("");
+  const [showMobileCart, setShowMobileCart] = useState(false);
 
   useEffect(() => {
     fetchInventory();
@@ -366,7 +367,7 @@ function OrderTransaction() {
         isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-white border-neutral-200"
       }`}>
         <div className="px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pl-14 lg:pl-0">
             <div className="flex items-center gap-3 sm:gap-4">
               <div className={`p-3 rounded-xl ${isDarkMode ? "bg-orange-900/30" : "bg-orange-100"}`}>
                 <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600" />
@@ -400,7 +401,7 @@ function OrderTransaction() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden flex">
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
         {/* LEFT SIDE: Products */}
         <div className="flex-1 flex flex-col">
           {/* Search Bar */}
@@ -633,12 +634,21 @@ function OrderTransaction() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: Cart */}
-        <div className={`w-[380px] sm:w-[420px] flex-shrink-0 flex flex-col border-l shadow-xl ${
-          isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-white border-neutral-200"
-        }`}>
+        {/* RIGHT SIDE: Cart — side panel on lg+, bottom drawer on mobile */}
+        <div className={`
+          lg:w-[380px] xl:w-[420px] lg:flex-shrink-0 lg:border-l lg:shadow-xl flex flex-col
+          ${showMobileCart
+            ? "fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-2xl shadow-2xl max-h-[85vh]"
+            : "hidden lg:flex"}
+          ${isDarkMode ? "bg-neutral-800 border-neutral-700" : "bg-white border-neutral-200"}
+        `}>
+          {/* Mobile drag handle */}
+          <div className="lg:hidden flex-shrink-0 flex justify-center pt-3 pb-1">
+            <div className={`w-10 h-1 rounded-full ${isDarkMode ? "bg-neutral-600" : "bg-neutral-300"}`} />
+          </div>
+
           {/* Cart Header */}
-          <div className={`flex-shrink-0 px-4 py-4 border-b flex items-center justify-between ${
+          <div className={`flex-shrink-0 px-4 py-3 border-b flex items-center justify-between ${
             isDarkMode ? "border-neutral-700" : "border-neutral-200"
           }`}>
             <h2 className={`text-lg font-bold flex items-center gap-2 ${
@@ -647,18 +657,27 @@ function OrderTransaction() {
               <ShoppingCart className="w-5 h-5 text-orange-600" />
               Cart ({cart.length})
             </h2>
-            {cart.length > 0 && (
+            <div className="flex items-center gap-2">
+              {cart.length > 0 && (
+                <button
+                  onClick={openClearCartModal}
+                  className="text-sm text-red-500 hover:text-red-600 font-semibold px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                >
+                  Clear
+                </button>
+              )}
+              {/* Close button — mobile only */}
               <button
-                onClick={openClearCartModal}
-                className="text-sm text-red-500 hover:text-red-600 font-semibold px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                onClick={() => setShowMobileCart(false)}
+                className={`lg:hidden p-1.5 rounded-xl transition-colors ${isDarkMode ? "text-neutral-400 hover:bg-neutral-700" : "text-neutral-500 hover:bg-neutral-100"}`}
               >
-                Clear
+                <X className="w-5 h-5" />
               </button>
-            )}
+            </div>
           </div>
 
           {/* Cart Items */}
-          <div className={`flex-[0_0_240px] lg:flex-[0_0_260px] min-h-[220px] overflow-y-auto p-4 border-b ${
+          <div className={`flex-[1_1_auto] max-h-[30vh] lg:flex-[0_0_260px] min-h-[120px] overflow-y-auto p-4 border-b ${
             isDarkMode ? "border-neutral-700" : "border-neutral-200"
           }`}>
             {cart.length === 0 ? (
@@ -1058,6 +1077,27 @@ function OrderTransaction() {
         </div>
       </div>
 
+      {/* Mobile cart overlay */}
+      {showMobileCart && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          onClick={() => setShowMobileCart(false)}
+        />
+      )}
+
+      {/* Floating Cart Button — mobile only */}
+      <button
+        onClick={() => setShowMobileCart(v => !v)}
+        className="fixed bottom-6 right-6 z-40 lg:hidden w-16 h-16 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white rounded-full shadow-2xl flex items-center justify-center transition-all"
+      >
+        <ShoppingCart className="w-7 h-7" />
+        {cart.length > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[1.5rem] h-6 px-1.5 bg-rose-500 text-white text-xs font-black rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+            {cart.length}
+          </span>
+        )}
+      </button>
+
       {/* Checkout Processing Overlay */}
       {loading && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
@@ -1117,7 +1157,7 @@ function OrderTransaction() {
 
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-50 animate-in slide-in-from-bottom-4 duration-300">
           <div className={`px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 max-w-sm ${
             notification.type === "error" ? "bg-rose-600 text-white" : "bg-emerald-600 text-white"
           }`}>
@@ -1235,7 +1275,7 @@ function CustomerModal({ isDarkMode, customers, onSelectCustomer, onClose }) {
           </div>
         </div>
         
-        <div className="p-4 max-h-96 overflow-y-auto">
+        <div className="p-4 max-h-[50vh] overflow-y-auto">
           {filteredCustomers.length === 0 ? (
             <div className="text-center py-12">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
