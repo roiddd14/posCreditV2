@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { X, Plus, Package, Search, AlertTriangle, Edit2, Archive, Save, Image as ImageIcon, XCircle, TrendingUp, PhilippinePeso, Scan, Tag, SlidersHorizontal, CheckCircle2, Barcode, RotateCcw, Trash2 } from "lucide-react";
+import { X, Plus, Package, Search, AlertTriangle, Edit2, Archive, Save, Image as ImageIcon, XCircle, TrendingUp, PhilippinePeso, Scan, Tag, SlidersHorizontal, CheckCircle2, Barcode, RotateCcw, Trash2, Loader2 } from "lucide-react";
 
 import { useDarkMode } from "./contexts/DarkModeContext";
 import { useAuth } from "./contexts/AuthContext";
@@ -34,6 +34,7 @@ function Inventory({ setToken }) {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [category, setCategory] = useState("");
+  const [barcode, setBarcode] = useState("");
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -48,6 +49,8 @@ function Inventory({ setToken }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [animateCards, setAnimateCards] = useState(false);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [isUpdatingItem, setIsUpdatingItem] = useState(false);
 
   // Archived items
   const [showArchived, setShowArchived] = useState(false);
@@ -199,6 +202,7 @@ function Inventory({ setToken }) {
 
     if (!name || !price || !image) return;
 
+    setIsAddingItem(true);
     try {
       const formData = new FormData();
       formData.append("name", name);
@@ -206,6 +210,7 @@ function Inventory({ setToken }) {
       formData.append("stock", Number(stock) || 0);
       const cleanCategory = normalizeCategory(category);
       if (cleanCategory) formData.append("category", cleanCategory);
+      if (barcode.trim()) formData.append("barcode", barcode.trim());
       formData.append("image", image);
 
       const res = await fetch(INVENTORY_API, {
@@ -224,6 +229,7 @@ function Inventory({ setToken }) {
       setPrice("");
       setStock("");
       setCategory("");
+      setBarcode("");
       setImage(null);
       setImagePreview(null);
       setShowAddModal(false);
@@ -232,10 +238,13 @@ function Inventory({ setToken }) {
     } catch (err) {
       console.error("Add item error:", err);
       showNotification("Failed to add item", "error");
+    } finally {
+      setIsAddingItem(false);
     }
   };
 
   const updateItem = async (id, updatedData) => {
+    setIsUpdatingItem(true);
     try {
       const formData = new FormData();
       formData.append("name", updatedData.name);
@@ -272,6 +281,8 @@ function Inventory({ setToken }) {
     } catch (err) {
       console.error("Update item error:", err);
       showNotification("Failed to update item", "error");
+    } finally {
+      setIsUpdatingItem(false);
     }
   };
 
@@ -742,21 +753,25 @@ function Inventory({ setToken }) {
           price={price}
           stock={stock}
           category={category}
+          barcode={barcode}
           existingCategories={activeCategories.filter(c => c !== "All")}
           imagePreview={imagePreview}
           onNameChange={(e) => setName(e.target.value)}
           onPriceChange={(e) => setPrice(e.target.value)}
           onStockChange={(e) => setStock(Math.max(0, e.target.value))}
           onCategoryChange={(e) => setCategory(e.target.value)}
+          onBarcodeChange={(e) => setBarcode(e.target.value)}
           onImageChange={handleImageChange}
           onRemoveImage={removeImage}
           onSubmit={addItem}
+          isSubmitting={isAddingItem}
           onClose={() => {
             setShowAddModal(false);
             setName("");
             setPrice("");
             setStock("");
             setCategory("");
+            setBarcode("");
             setImage(null);
             setImagePreview(null);
           }}
@@ -776,6 +791,7 @@ function Inventory({ setToken }) {
             e.preventDefault();
             updateItem(editingItem._id, editingItem);
           }}
+          isSubmitting={isUpdatingItem}
           onClose={closeEditModal}
         />
       )}
@@ -1098,15 +1114,18 @@ function AddItemModal({
   price,
   stock,
   category,
+  barcode,
   existingCategories = [],
   imagePreview,
   onNameChange,
   onPriceChange,
   onStockChange,
   onCategoryChange,
+  onBarcodeChange,
   onImageChange,
   onRemoveImage,
   onSubmit,
+  isSubmitting = false,
   onClose
 }) {
   return (
@@ -1205,6 +1224,25 @@ function AddItemModal({
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
+                <span className="flex items-center gap-1.5">
+                  <Barcode className="w-4 h-4" />
+                  Barcode
+                </span>
+              </label>
+              <input
+                type="text"
+                placeholder="Scan or type barcode"
+                className={`w-full border-2 px-4 py-3 rounded-xl focus:outline-none focus:border-orange-500 transition-all font-mono ${
+                  isDarkMode ? "bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400" : "bg-white border-neutral-200 text-neutral-800 placeholder-neutral-500"
+                }`}
+                value={barcode}
+                onChange={onBarcodeChange}
+                onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
                 Product Image <span className="text-rose-500">*</span>
               </label>
               <div className={`border-2 border-dashed rounded-xl p-3 transition-colors ${
@@ -1254,9 +1292,10 @@ function AddItemModal({
               <button
                 type="button"
                 onClick={onClose}
-                className={`flex-1 px-6 py-3 border-2 rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 ${
-                  isDarkMode 
-                    ? "border-neutral-600 text-neutral-300 hover:bg-neutral-700" 
+                disabled={isSubmitting}
+                className={`flex-1 px-6 py-3 border-2 rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                  isDarkMode
+                    ? "border-neutral-600 text-neutral-300 hover:bg-neutral-700"
                     : "border-neutral-300 text-neutral-700 hover:bg-neutral-50"
                 }`}
               >
@@ -1264,10 +1303,20 @@ function AddItemModal({
               </button>
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:from-orange-500 disabled:hover:to-orange-600"
               >
-                <Plus className="w-5 h-5" />
-                Add Item
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5" />
+                    Add Item
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -1278,7 +1327,7 @@ function AddItemModal({
 }
 
 // Edit Item Modal Component
-function EditItemModal({ isDarkMode, item, existingCategories = [], onItemChange, onImageChange, onRemoveImage, onSubmit, onClose }) {
+function EditItemModal({ isDarkMode, item, existingCategories = [], onItemChange, onImageChange, onRemoveImage, onSubmit, isSubmitting = false, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
       <div className={`rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in duration-300 ${
@@ -1452,9 +1501,10 @@ function EditItemModal({ isDarkMode, item, existingCategories = [], onItemChange
               <button
                 type="button"
                 onClick={onClose}
-                className={`flex-1 px-6 py-3 border-2 rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 ${
-                  isDarkMode 
-                    ? "border-neutral-600 text-neutral-300 hover:bg-neutral-700" 
+                disabled={isSubmitting}
+                className={`flex-1 px-6 py-3 border-2 rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                  isDarkMode
+                    ? "border-neutral-600 text-neutral-300 hover:bg-neutral-700"
                     : "border-neutral-300 text-neutral-700 hover:bg-neutral-50"
                 }`}
               >
@@ -1462,10 +1512,20 @@ function EditItemModal({ isDarkMode, item, existingCategories = [], onItemChange
               </button>
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:from-orange-500 disabled:hover:to-orange-600"
               >
-                <Save className="w-5 h-5" />
-                Update Item
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Update Item
+                  </>
+                )}
               </button>
             </div>
           </div>
