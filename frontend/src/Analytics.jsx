@@ -1141,9 +1141,29 @@ function TransactionReceiptModal({ transaction: t, isDarkMode, onClose }) {
           </div>
         </div>
 
-        {/* Items */}
+        {/* Items / Payment Detail */}
         <div className="px-6 py-4 max-h-64 overflow-y-auto space-y-3">
-          {t.items?.length ? (
+          {isPayment ? (
+            /* Credit payment — show payment summary */
+            <div className={`rounded-xl p-4 flex flex-col gap-3 ${isDarkMode ? "bg-violet-900/20 border border-violet-800/40" : "bg-violet-50 border border-violet-100"}`}>
+              <div className="flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                <p className={`text-sm font-semibold ${isDarkMode ? "text-violet-300" : "text-violet-700"}`}>
+                  Credit Balance Payment
+                </p>
+              </div>
+              {t.customer?.name && (
+                <div className="flex justify-between text-sm">
+                  <span className={isDarkMode ? "text-neutral-400" : "text-neutral-500"}>Customer</span>
+                  <span className={`font-semibold ${isDarkMode ? "text-white" : "text-neutral-800"}`}>{t.customer.name}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className={isDarkMode ? "text-neutral-400" : "text-neutral-500"}>Amount Paid</span>
+                <span className="font-bold text-violet-500">{fmt(t.total)}</span>
+              </div>
+            </div>
+          ) : t.items?.length ? (
             t.items.map((item, i) => (
               <div key={i} className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">

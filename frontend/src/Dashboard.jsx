@@ -32,6 +32,8 @@ function Dashboard({ setToken }) {
   const [showModal, setShowModal]               = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [amount, setAmount]                     = useState("");
+  const [cashTendered, setCashTendered]         = useState("");
+  const [paymentReceipt, setPaymentReceipt]     = useState(null);
   const [notification, setNotification]         = useState(null);
   const [searchTerm, setSearchTerm]             = useState("");
   const [filterStatus, setFilterStatus]         = useState("all");   // 'all' | 'owing' | 'paid'
@@ -218,7 +220,8 @@ function Dashboard({ setToken }) {
 
   const handleModalSubmit = async (e) => {
     e.preventDefault();
-    const numAmount = Number(amount);
+    const numAmount   = Number(amount);
+    const numTendered = parseFloat(cashTendered) || 0;
     if (!amount || isNaN(numAmount) || numAmount <= 0) {
       showNotification("Please enter a valid positive amount", "error");
       return;
@@ -228,6 +231,10 @@ function Dashboard({ setToken }) {
         `Payment amount (₱${numAmount.toFixed(2)}) cannot exceed customer balance (₱${selectedCustomer.balance.toFixed(2)})`,
         "error"
       );
+      return;
+    }
+    if (!cashTendered || numTendered < numAmount) {
+      showNotification("Cash tendered must cover the payment amount", "error");
       return;
     }
 
@@ -243,10 +250,23 @@ function Dashboard({ setToken }) {
         throw new Error(errorData.message || "Failed to record payment");
       }
 
+      const data = await response.json();
       await loadDashboard();
-      showNotification(`Recorded payment of ₱${numAmount.toFixed(2)}`);
       setShowModal(false);
+
+      // Show payment receipt
+      setPaymentReceipt({
+        customerName: selectedCustomer.name,
+        customerId:   selectedCustomer.customerId,
+        amount:       numAmount,
+        cashTendered: numTendered,
+        change:       numTendered - numAmount,
+        receiptNumber: data.receiptNumber || null,
+        createdAt:    new Date().toISOString(),
+      });
+
       setAmount("");
+      setCashTendered("");
 
       if (showCustomerDetail) {
         await loadCustomerHistory(customerId);
@@ -678,10 +698,23 @@ function Dashboard({ setToken }) {
       {showModal && (
         <PaymentModal
           customer={selectedCustomer} amount={amount}
+          cashTendered={cashTendered}
           isDarkMode={isDarkMode}
           onAmountChange={handleAmountChange}
+          onCashTenderedChange={(e) => {
+            const v = e.target.value;
+            if (v === "" || /^\d{0,5}(\.\d{0,2})?$/.test(v)) setCashTendered(v);
+          }}
           onSubmit={handleModalSubmit}
-          onClose={() => setShowModal(false)}
+          onClose={() => { setShowModal(false); setAmount(""); setCashTendered(""); }}
+        />
+      )}
+
+      {paymentReceipt && (
+        <PaymentReceiptModal
+          receipt={paymentReceipt}
+          isDarkMode={isDarkMode}
+          onClose={() => setPaymentReceipt(null)}
         />
       )}
 
@@ -1365,10 +1398,13 @@ function TransactionCard({ transaction, isDarkMode, delay }) {
 }
 
 /* ── Payment Modal ─────────────────────────────────────────── */
-function PaymentModal({ customer, amount, isDarkMode, onAmountChange, onSubmit, onClose }) {
-  const numAmount    = Number(amount);
+function PaymentModal({ customer, amount, cashTendered, isDarkMode, onAmountChange, onCashTenderedChange, onSubmit, onClose }) {
+  const numAmount     = Number(amount);
+  const numTendered   = parseFloat(cashTendered) || 0;
+  const change        = numTendered - numAmount;
   const isOverBalance = numAmount > (customer?.balance || 0);
-  const isInvalid    = !amount || isNaN(numAmount) || numAmount <= 0 || isOverBalance;
+  const isInvalid     = !amount || isNaN(numAmount) || numAmount <= 0 || isOverBalance ||
+                        !cashTendered || numTendered < numAmount;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
@@ -1424,6 +1460,49 @@ function PaymentModal({ customer, amount, isDarkMode, onAmountChange, onSubmit, 
             )}
           </div>
 
+          {/* Cash Tendered */}
+          <div className="mb-6">
+            <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>
+              Cash Tendered
+            </label>
+            <div className="relative">
+              <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-semibold ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>₱</span>
+              <input
+                type="number" min="0" max="99999" step="0.01" placeholder="0.00"
+                value={cashTendered}
+                onChange={onCashTenderedChange}
+                className={`w-full border-2 pl-8 pr-4 py-3 rounded-xl focus:outline-none transition-all text-lg font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                  cashTendered && numTendered < numAmount
+                    ? "border-rose-500 focus:border-rose-600 " + (isDarkMode ? "bg-rose-900/10 text-rose-300" : "bg-rose-50 text-rose-700")
+                    : "focus:border-emerald-500 " + (isDarkMode ? "bg-neutral-700 border-neutral-600 text-white" : "bg-white border-neutral-200 text-neutral-800")
+                }`}
+              />
+            </div>
+            {/* Change display */}
+            {cashTendered !== "" && !isNaN(numTendered) && numAmount > 0 && (
+              <div className={`mt-2 p-3 rounded-xl flex justify-between items-center ${
+                numTendered >= numAmount
+                  ? isDarkMode ? "bg-emerald-900/30 border border-emerald-700" : "bg-emerald-50 border border-emerald-200"
+                  : isDarkMode ? "bg-rose-900/30 border border-rose-700" : "bg-rose-50 border border-rose-200"
+              }`}>
+                <span className={`text-xs font-bold uppercase tracking-wide ${
+                  numTendered >= numAmount
+                    ? isDarkMode ? "text-emerald-400" : "text-emerald-700"
+                    : isDarkMode ? "text-rose-400" : "text-rose-600"
+                }`}>
+                  {numTendered >= numAmount ? "Change" : "Short by"}
+                </span>
+                <span className={`text-lg font-black ${
+                  numTendered >= numAmount
+                    ? isDarkMode ? "text-emerald-400" : "text-emerald-700"
+                    : isDarkMode ? "text-rose-400" : "text-rose-600"
+                }`}>
+                  ₱{Math.abs(change).toFixed(2)}
+                </span>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3">
             <button type="button" onClick={onClose}
               className={`flex-1 px-6 py-3 border-2 rounded-xl font-semibold transition-all active:scale-95 ${isDarkMode ? "border-neutral-600 text-neutral-300 hover:bg-neutral-700" : "border-neutral-300 text-neutral-700 hover:bg-neutral-50"}`}>
@@ -1439,6 +1518,84 @@ function PaymentModal({ customer, amount, isDarkMode, onAmountChange, onSubmit, 
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+/* ── Payment Receipt Modal ──────────────────────────────────── */
+function PaymentReceiptModal({ receipt, isDarkMode, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70] animate-in fade-in duration-300">
+      <div className={`rounded-2xl shadow-2xl max-w-sm w-full animate-in zoom-in duration-300 ${isDarkMode ? "bg-neutral-800" : "bg-white"}`}>
+
+        {/* Success header */}
+        <div className={`p-6 border-b text-center relative ${isDarkMode ? "border-neutral-700" : "border-neutral-200"}`}>
+          <button onClick={onClose} className={`absolute top-4 right-4 p-2 rounded-xl transition-colors ${isDarkMode ? "text-neutral-400 hover:text-white hover:bg-neutral-700" : "text-neutral-600 hover:text-neutral-800 hover:bg-neutral-100"}`}>
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex items-center justify-center mb-3">
+            <div className="relative">
+              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-9 h-9 text-emerald-600" />
+              </div>
+              <div className="absolute inset-0 w-16 h-16 bg-emerald-400/20 rounded-full animate-ping" />
+            </div>
+          </div>
+          <h2 className={`text-xl font-bold ${isDarkMode ? "text-white" : "text-neutral-800"}`}>Payment Recorded!</h2>
+          <p className={`text-sm mt-1 ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>Receipt generated successfully</p>
+        </div>
+
+        {/* Receipt body */}
+        <div className="p-6 space-y-4">
+          {/* Receipt number & date */}
+          <div className={`text-center pb-4 border-b ${isDarkMode ? "border-neutral-700" : "border-neutral-200"}`}>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Wallet className="w-4 h-4 text-emerald-500" />
+              <h3 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-neutral-800"}`}>PAYMENT RECEIPT</h3>
+            </div>
+            {receipt.receiptNumber && (
+              <p className={`text-xs font-mono ${isDarkMode ? "text-neutral-400" : "text-neutral-600"}`}>{receipt.receiptNumber}</p>
+            )}
+            <p className={`text-xs mt-0.5 ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>
+              {new Date(receipt.createdAt).toLocaleString()}
+            </p>
+          </div>
+
+          {/* Customer */}
+          <div className={`flex justify-between text-sm pb-3 border-b ${isDarkMode ? "border-neutral-700" : "border-neutral-200"}`}>
+            <span className={isDarkMode ? "text-neutral-400" : "text-neutral-500"}>Customer</span>
+            <div className="text-right">
+              <p className={`font-semibold ${isDarkMode ? "text-white" : "text-neutral-800"}`}>{receipt.customerName}</p>
+              {receipt.customerId && <p className={`text-xs font-mono ${isDarkMode ? "text-neutral-500" : "text-neutral-400"}`}>{receipt.customerId}</p>}
+            </div>
+          </div>
+
+          {/* Amounts */}
+          <div className={`rounded-xl overflow-hidden ${isDarkMode ? "bg-neutral-700" : "bg-neutral-100"}`}>
+            <div className="flex justify-between items-center px-4 pt-4 pb-2">
+              <span className={`font-semibold text-sm ${isDarkMode ? "text-neutral-300" : "text-neutral-700"}`}>AMOUNT PAID</span>
+              <span className="text-2xl font-black text-emerald-500">₱{receipt.amount.toFixed(2)}</span>
+            </div>
+            <div className={`mx-4 border-t ${isDarkMode ? "border-neutral-600" : "border-neutral-200"}`} />
+            <div className="flex justify-between items-center px-4 py-2">
+              <span className={`text-sm ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`}>Cash Tendered</span>
+              <span className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-neutral-800"}`}>₱{receipt.cashTendered.toFixed(2)}</span>
+            </div>
+            <div className={`mx-4 border-t ${isDarkMode ? "border-neutral-600" : "border-neutral-200"}`} />
+            <div className={`flex justify-between items-center px-4 py-3 rounded-b-xl ${isDarkMode ? "bg-emerald-900/30" : "bg-emerald-50"}`}>
+              <span className={`text-sm font-bold uppercase tracking-wide ${isDarkMode ? "text-emerald-400" : "text-emerald-700"}`}>Change</span>
+              <span className={`text-xl font-black ${isDarkMode ? "text-emerald-400" : "text-emerald-700"}`}>₱{receipt.change.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 pb-6">
+          <button onClick={onClose}
+            className={`w-full py-3 rounded-xl font-semibold transition-all active:scale-95 ${isDarkMode ? "bg-neutral-700 hover:bg-neutral-600 text-white" : "bg-neutral-200 hover:bg-neutral-300 text-neutral-800"}`}>
+            Done
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -52,12 +52,13 @@ export const addUtang = async (req, res) => {
         });
 
         await paymentTransaction.save();
-        
+
         // Link the transaction to the utang record
         utang.transaction = paymentTransaction._id;
         await utang.save();
 
         console.log(`✅ Created payment transaction ${receiptNumber} for customer payment of ₱${amount}`);
+        return res.status(201).json({ ...utang.toObject(), receiptNumber, transactionId: paymentTransaction._id });
       } catch (transactionError) {
         console.error("Error creating payment transaction:", transactionError);
         // Don't fail the whole request if transaction creation fails
